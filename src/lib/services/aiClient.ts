@@ -1,10 +1,11 @@
 import type { AuditResult } from "../types";
-import { clampScore, truncateText } from "../utils";
+import { clampScore, scoreToRiskLevel, truncateText } from "../utils";
 import { runHeuristicAudit } from "./heuristicAuditor";
 import { SYSTEM_PROMPT, buildUserPrompt, extractAndValidateJson } from "./promptSchema";
 
 interface ChatCompletionChoice {
   message?: { content?: string };
+  finish_reason?: string;
 }
 
 interface ChatCompletionResponse {
@@ -33,15 +34,10 @@ async function callLlmEndpoint(sourceLabel: string, content: string): Promise<st
         { role: "user", content: buildUserPrompt(sourceLabel, content) }
       ],
       temperature: 0.2,
-      max_tokens: 4000,
-      // Some hosted models (e.g. Baseten's Kimi K3) are "thinking" models that spend
-      // completion tokens on hidden reasoning before emitting the JSON body. Requesting
-      // low reasoning effort keeps the full response (reasoning + JSON) within budget.
-      // Endpoints/models that don't recognize this field simply ignore it.
-      reasoning_effort: "low",
+      max_tokens: 5000,
       response_format: { type: "json_object" }
     }),
-    signal: AbortSignal.timeout(60000)
+    signal: AbortSignal.timeout(45000)
   });
 
   if (!response.ok) {
@@ -50,6 +46,9 @@ async function callLlmEndpoint(sourceLabel: string, content: string): Promise<st
   }
 
   const data = (await response.json()) as ChatCompletionResponse;
+  if (data.choices?.[0]?.finish_reason === "length") {
+    throw new Error("AI endpoint truncated the structured response before completion.");
+  }
   const text = data.choices?.[0]?.message?.content;
 
   if (!text) {
@@ -76,16 +75,17 @@ export async function generateAudit(sourceLabel: string, content: string): Promi
 
   try {
     const rawResponse = await callLlmEndpoint(sourceLabel, content);
-    const parsed = extractAndValidateJson(rawResponse);
+    const parsed = extractAndValidateJson(rawResponse, content);
 
     if (!parsed) {
       console.warn("[aiClient] LLM response failed schema validation, falling back to heuristic auditor.");
       return runHeuristicAudit(content);
     }
 
+    const overallScore = clampScore(parsed.overallScore);
     return {
-      overallScore: clampScore(parsed.overallScore),
-      riskLevel: parsed.riskLevel,
+      overallScore,
+      riskLevel: scoreToRiskLevel(overallScore),
       flaggedClaims: parsed.flaggedClaims,
       missingMetrics: parsed.missingMetrics,
       remediatedCopy: parsed.remediatedCopy,
