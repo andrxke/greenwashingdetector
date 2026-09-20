@@ -2,10 +2,8 @@
 
 import { InputTabs } from "@/components/dashboard/InputTabs";
 import { PdfDropzone } from "@/components/dashboard/PdfDropzone";
-import { SampleCaseButton } from "@/components/dashboard/SampleCaseButton";
 import { TextPasteBox } from "@/components/dashboard/TextPasteBox";
 import { UrlInputForm } from "@/components/dashboard/UrlInputForm";
-import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { ResultsView } from "@/components/results/ResultsView";
 import { Button } from "@/components/ui/Button";
@@ -44,7 +42,6 @@ export default function DashboardPage() {
               Submit a URL, PDF report, or marketing copy to run a full compliance audit.
             </p>
           </div>
-          <SampleCaseButton onClick={loadSampleCase} disabled={loading} />
         </div>
 
         <AnimatePresence mode="wait">
@@ -96,7 +93,6 @@ export default function DashboardPage() {
           )}
         </AnimatePresence>
       </main>
-      <Footer />
     </div>
   );
 }

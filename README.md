@@ -11,7 +11,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000), then click **Launch the Auditor** (or go directly to `/app`).
 
-The app works **fully out of the box with zero configuration** — no API keys required. Click **Load Sample Bad ESG Report** on the dashboard for an instant demo case, or paste your own marketing copy.
+The app works **fully out of the box with zero configuration** — no API keys required.
 
 ## How It Works
 

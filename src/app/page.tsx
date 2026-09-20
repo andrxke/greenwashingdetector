@@ -1,5 +1,4 @@
 import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/Button";
 import { AlertTriangle, FileSearch, Gauge, Leaf, ScanSearch, ShieldCheck } from "lucide-react";
 import Link from "next/link";
@@ -72,7 +71,6 @@ export default function LandingPage() {
           </div>
         </section>
       </main>
-      <Footer />
     </div>
   );
 }
