@@ -46,7 +46,7 @@ export function ExportButton({ result, sourceLabel }: ExportButtonProps) {
       };
 
       doc.setTextColor(16, 24, 32);
-      writeParagraph("EcoClaim Auditor \u2014 Greenwashing Risk Report", 18, 8, true);
+      writeParagraph("EcoClaim Auditor - Greenwashing Risk Report", 18, 8, true);
       cursorY += 2;
       writeParagraph(`Source: ${sourceLabel ?? "Unknown"}`, 10, 5.5);
       writeParagraph(`Generated: ${new Date().toLocaleString()}`, 10, 5.5);

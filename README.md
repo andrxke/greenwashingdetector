@@ -1,8 +1,8 @@
 # EcoClaim Auditor
 
-AI-powered greenwashing detection platform built for Hack the North 2026. EcoClaim Auditor analyzes corporate websites, uploaded ESG PDF reports, or pasted marketing copy, flags deceptive or unsubstantiated environmental claims, computes a quantitative **Greenwashing Risk Score**, and produces a structured audit report with actionable, compliant corrections.
+EcoClaim is a greenwashing detection all builder for Hack the North 2026. EcoClaim is capable of analyzing corporate websides, uploaded ESG PDF reports, as well as text and flag deceptive, jargon, or unsubstantiative corporate claims, computing a quantitative **Greenwashing Risk Score**. EcoClaim produces a concise report of the audit with actionable, compliant corrections.
 
-## Quick Start
+## Starting
 
 ```bash
 npm install
@@ -10,17 +10,16 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000), then click **Launch the Auditor** (or go directly to `/app`).
-
-The app works **fully out of the box with zero configuration** — no API keys required.
-
+The app works **fully out of the box with zero configuration**. There are no API keys required (use responsibly!).
+   
 ## How It Works
 
-1. **Input** — submit a URL, upload a PDF ESG report, or paste raw text via the `/app` dashboard.
-2. **Ingestion** — the `/api/audit` route handler scrapes the URL (`cheerio`) or extracts PDF text (`pdf-parse`).
-3. **Analysis** — the extracted content is sent to `generateAudit()`:
+1. **Input**: submit a URL, upload a PDF ESG report, or paste raw text via the `/app` dashboard.
+2. **Ingestion**: the `/api/audit` route handler scrapes the URL using `cheerio`, or extracts PDF text with `pdf-parse`
+3. **Analysis**: the extracted content is sent to `generateAudit()`:
    - If `AI_ENDPOINT_URL` / `AI_API_KEY` / `AI_MODEL` are configured (see `.env.example`), it calls that OpenAI-compatible chat-completions endpoint (Baseten, Modal, or OpenAI) using a system prompt that forces the model into an aggressive, cynical compliance-auditor persona and validates the JSON response with `zod`.
-   - Otherwise (or if the LLM call/validation fails), it automatically falls back to a deterministic **heuristic auditor** that performs real pattern-based greenwashing detection — no external dependency required.
-4. **Results** — an animated Greenwashing Risk Score gauge, claim-by-claim breakdown (original quote / critique / regulation tip), missing-metrics checklist, and AI-suggested compliant copy are rendered, with a one-click PDF export.
+   - Otherwise (or if the LLM call/validation fails), it automatically falls back to a deterministic **heuristic auditor** that performs real pattern-based greenwashing detection with no external dependency required.
+4. **Results**: an animated Greenwashing Risk Score gauge, claim-by-claim breakdown (original quote / critique / regulation tip), missing-metrics checklist, and AI-suggested compliant copy are rendered, with a one-click PDF export.
 
 ## Enabling Real LLM Analysis
 
@@ -44,7 +43,7 @@ Both Baseten and Modal deployments commonly expose OpenAI-compatible chat-comple
 
 ## Scripts
 
-- `npm run dev` — start the development server.
-- `npm run build` — production build.
-- `npm run start` — run the production build.
-- `npm run lint` — run ESLint.
+- `npm run dev`: start the development server.
+- `npm run build`: production build.
+- `npm run start`: run the production build.
+- `npm run lint`: run ESLint.
