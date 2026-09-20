@@ -1,6 +1,6 @@
 # EcoClaim Auditor
 
-AI-powered greenwashing detection platform built for Hack the North 2026. EcoClaim Auditor analyzes corporate websites, uploaded ESG PDF reports, or pasted marketing copy, flags deceptive or unsubstantiated environmental claims, computes a quantitative **Greenwashing Risk Score**, and produces a structured audit report with actionable, compliant corrections.
+AI-powered greenwashing detection platform built for Hack the North 2026. EcoClaim Auditor analyzes corporate websites, discovered sustainability reports, uploaded ESG PDF reports, or pasted marketing copy, flags deceptive or unsubstantiated environmental claims, computes a quantitative **Greenwashing Risk Score**, and produces a structured audit report with actionable, compliant corrections.
 
 ## Quick Start
 
@@ -15,14 +15,25 @@ The app works **fully out of the box with zero configuration** — no API keys r
 
 ## How It Works
 
-1. **Input** — submit a URL, upload a PDF ESG report, or paste raw text via the `/app` dashboard.
-2. **Ingestion** — the `/api/audit` route handler scrapes the URL (`cheerio`) or extracts PDF text (`pdf-parse`).
+1. **Input** — submit a URL, search by company name, upload a PDF ESG report, or paste raw text via the `/app` dashboard.
+2. **Ingestion** — the `/api/audit` route handler uses direct `cheerio` scraping first. When `BROWSERBASE_API_KEY` is configured, it falls back to Browserbase Fetch and then a short-lived Playwright browser session for JavaScript-heavy pages; company mode uses Browserbase Search to find and fetch official report candidates.
 3. **Analysis** — the extracted content is sent to `generateAudit()`:
    - If `AI_ENDPOINT_URL` / `AI_API_KEY` / `AI_MODEL` are configured in the deployment environment, it calls that OpenAI-compatible chat-completions endpoint (Baseten, Modal, or OpenAI) using an evidence-grounded screening prompt and validates the JSON response with `zod`.
    - Otherwise (or if the LLM call/validation fails), it automatically falls back to a deterministic **heuristic auditor** that performs real pattern-based greenwashing detection — no external dependency required.
 4. **Results** — an animated screening-risk gauge, claim-by-claim breakdown (original quote / critique / evidence status / regulation tip), missing-metrics checklist, and a suggested revision requiring human review are rendered, with a one-click PDF export.
 
 The report is a screening aid, not a legal determination. Each finding carries an evidence status (`supported`, `contradicted`, or `insufficient_evidence`) and a screening confidence. Claims are accepted only when their quoted text appears in the submitted source, and risk level is derived from the numeric score on the server.
+
+## Optional Browserbase acquisition
+
+Browserbase is server-only and optional. Configure these variables to enable company-name discovery and browser fallback:
+
+```bash
+BROWSERBASE_API_KEY=your-api-key
+BROWSERBASE_PROJECT_ID=your-project-id
+```
+
+The acquisition order is Search → Fetch → Browser session. Fetch is used for static content, while a Browserbase session is reserved for JavaScript-rendered or blocked pages. Discovered links are restricted to HTTP(S), browser sessions are restricted to the starting hostname, and only a small number of report candidates are combined. If Browserbase is unavailable, URL inputs retain the existing direct scraper behavior; company-only discovery returns a clear configuration error rather than fabricating a source.
 
 ## Enabling Real LLM Analysis
 

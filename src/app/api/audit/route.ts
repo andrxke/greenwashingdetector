@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { generateAudit } from "@/lib/services/aiClient";
 import { PdfParseError, parsePdfBuffer } from "@/lib/services/pdfParser";
 import { ScraperError, scrapeUrl } from "@/lib/services/scraper";
+import { BrowserbaseError, discoverCompanySources, enrichUrlSource } from "@/lib/services/browserbase";
 import type { AuditApiError, AuditResult, InputMode } from "@/lib/types";
 import { isLikelyUrl, normalizeWhitespace } from "@/lib/utils";
 
@@ -26,8 +27,8 @@ export async function POST(request: Request) {
   }
 
   const mode = formData.get("mode");
-  if (mode !== "url" && mode !== "pdf" && mode !== "text") {
-    return errorResponse('Field "mode" must be one of "url", "pdf", or "text".', 400);
+  if (mode !== "url" && mode !== "company" && mode !== "pdf" && mode !== "text") {
+    return errorResponse('Field "mode" must be one of "url", "company", "pdf", or "text".', 400);
   }
 
   const inputMode = mode as InputMode;
@@ -45,9 +46,25 @@ export async function POST(request: Request) {
         return errorResponse("Please provide a valid http:// or https:// URL.", 400);
       }
 
-      const scraped = await scrapeUrl(urlValue.trim());
-      content = scraped.text;
-      sourceLabel = `Website: ${scraped.title} (${scraped.url})`;
+      try {
+        const scraped = await scrapeUrl(urlValue.trim());
+        const enriched = await enrichUrlSource(urlValue.trim(), scraped).catch(() => scraped);
+        content = enriched.text;
+        sourceLabel = `Website: ${enriched.title} (${enriched.url}; ${"acquisition" in enriched ? enriched.acquisition : "direct"})`;
+      } catch (err) {
+        if (!(err instanceof ScraperError)) throw err;
+        const enriched = await enrichUrlSource(urlValue.trim());
+        content = enriched.text;
+        sourceLabel = `Website: ${enriched.title} (${enriched.url}; ${enriched.acquisition})`;
+      }
+    } else if (inputMode === "company") {
+      const companyValue = formData.get("company");
+      if (typeof companyValue !== "string" || companyValue.trim().length < 2) {
+        return errorResponse("Please provide a company name to discover reports for.", 400);
+      }
+      const sources = await discoverCompanySources(companyValue.trim());
+      content = sources.map((source) => `SOURCE: ${source.title} (${source.url})\n${source.text}`).join("\n\n");
+      sourceLabel = `Discovered reports for ${companyValue.trim()} (${sources.length} source${sources.length === 1 ? "" : "s"})`;
     } else if (inputMode === "pdf") {
       const file = formData.get("file");
       if (!(file instanceof Blob)) {
@@ -72,7 +89,7 @@ export async function POST(request: Request) {
       sourceLabel = "Pasted marketing copy / social statement";
     }
   } catch (err) {
-    if (err instanceof ScraperError || err instanceof PdfParseError) {
+    if (err instanceof ScraperError || err instanceof PdfParseError || err instanceof BrowserbaseError) {
       return errorResponse(err.message, 422);
     }
     console.error("[api/audit] Unexpected ingestion error:", err);
