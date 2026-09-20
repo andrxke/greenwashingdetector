@@ -14,7 +14,7 @@ const CLAIM_PATTERNS: ClaimPattern[] = [
     regex: /\b100%\s*(sustainable|eco[- ]friendly|recycl\w*|carbon\s*neutral|natural|green|renewable|biodegradable)\b/gi,
     severity: "high",
     critique: (m) =>
-      `The absolute claim "${m}" asserts total, unqualified environmental performance. Absolute quantifiers like "100%" require rigorous, independently verifiable proof covering the entire lifecycle and supply chain \u2014 no such evidence is provided here.`,
+      `The absolute claim "${m}" asserts total, unqualified environmental performance. Absolute quantifiers like "100%" require rigorous, independently verifiable proof covering the entire lifecycle and supply chain - no such evidence is provided here.`,
     regulationTip:
       "FTC Green Guides \u00a7260.4: unqualified general environmental benefit claims are deceptive unless substantiated for the entire product lifecycle.",
     weight: 14
@@ -32,7 +32,7 @@ const CLAIM_PATTERNS: ClaimPattern[] = [
     regex: /\bcarbon[- ]neutral(ity)?\b/gi,
     severity: "medium",
     critique: (m) =>
-      `"${m}" is claimed without specifying whether this relies on offsets, the offset registry used, the baseline year, or whether Scope 3 emissions are included \u2014 a common greenwashing gap.`,
+      `"${m}" is claimed without specifying whether this relies on offsets, the offset registry used, the baseline year, or whether Scope 3 emissions are included - a common greenwashing gap.`,
     regulationTip:
       "ISO 14021 / ASA CAP Code: carbon neutrality claims must disclose whether they rely on offsetting and specify the accounting standard used.",
     weight: 10
@@ -59,7 +59,7 @@ const CLAIM_PATTERNS: ClaimPattern[] = [
     regex: /\ball[- ]natural\b/gi,
     severity: "low",
     critique: (m) =>
-      `"${m}" conflates "natural" with "environmentally safe," which is not necessarily true \u2014 many natural substances are toxic or resource-intensive to produce.`,
+      `"${m}" conflates "natural" with "environmentally safe," which is not necessarily true - many natural substances are toxic or resource-intensive to produce.`,
     regulationTip:
       "FTC Green Guides: 'natural' claims should not imply environmental benefit without specific substantiation.",
     weight: 5
@@ -266,7 +266,7 @@ export function runHeuristicAudit(content: string): AuditResult {
       );
 
   if (missingMetrics.length === 0) {
-    missingMetrics.push("No obvious data gaps detected by automated scan \u2014 manual review still recommended.");
+    missingMetrics.push("No obvious data gaps detected by automated scan - manual review still recommended.");
   }
 
   const specificityBonus = countSpecificityBonuses(content);

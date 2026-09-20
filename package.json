@@ -2,20 +2,20 @@
   "name": "ecoclaim-auditor",
   "version": "1.0.0",
   "private": true,
-  "description": "AI-powered greenwashing detection platform \u2014 Hack the North 2026",
+  "description": "AI-powered greenwashing detection platform - Hack the North 2026",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint ."
   },
   "dependencies": {
     "cheerio": "^1.0.0",
     "clsx": "^2.1.1",
     "framer-motion": "^11.11.17",
-    "jspdf": "^2.5.2",
+    "jspdf": "^4.2.1",
     "lucide-react": "^0.454.0",
-    "next": "^14.2.15",
+    "next": "^16.3.5",
     "pdf-parse": "^1.1.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -27,8 +27,8 @@
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.1",
     "autoprefixer": "^10.4.20",
-    "eslint": "^8.57.1",
-    "eslint-config-next": "^14.2.15",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.3.5",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.14",
     "typescript": "^5.6.3"

@@ -1,4 +1,4 @@
-export const SAMPLE_CASE_LABEL = "GreenFuture Corp \u2014 2025 Sustainability Report (Sample)";
+export const SAMPLE_CASE_LABEL = "GreenFuture Corp - 2025 Sustainability Report (Sample)";
 
 export const SAMPLE_CASE_TEXT = `GreenFuture Corp 2025 Sustainability Report
 

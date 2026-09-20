@@ -7,7 +7,7 @@ const FEATURES = [
   {
     icon: ScanSearch,
     title: "Multi-Source Ingestion",
-    description: "Paste a URL, upload an ESG PDF, or drop in raw marketing copy \u2014 one unified audit pipeline."
+    description: "Paste a URL, upload an ESG PDF, or drop in raw marketing copy - one unified audit pipeline."
   },
   {
     icon: Gauge,
@@ -46,7 +46,7 @@ export default function LandingPage() {
           <p className="mt-6 max-w-2xl text-lg text-slate-400">
             EcoClaim Auditor scans corporate websites, ESG reports, and marketing copy to flag
             unsubstantiated environmental claims, compute a Greenwashing Risk Score, and generate
-            compliant, honest alternative copy \u2014 in seconds.
+            compliant, honest alternative copy - in seconds.
           </p>
           <div className="mt-10 flex flex-col gap-3 sm:flex-row">
             <Link href="/app">
