@@ -7,6 +7,7 @@ import { useCallback, useState } from "react";
 interface UseAuditState {
   mode: InputMode;
   url: string;
+  company: string;
   text: string;
   file: File | null;
   loading: boolean;
@@ -18,6 +19,7 @@ interface UseAuditState {
 const INITIAL_STATE: UseAuditState = {
   mode: "text",
   url: "",
+  company: "",
   text: "",
   file: null,
   loading: false,
@@ -35,6 +37,10 @@ export function useAudit() {
 
   const setUrl = useCallback((url: string) => {
     setState((prev) => ({ ...prev, url, error: null }));
+  }, []);
+
+  const setCompany = useCallback((company: string) => {
+    setState((prev) => ({ ...prev, company, error: null }));
   }, []);
 
   const setText = useCallback((text: string) => {
@@ -73,6 +79,13 @@ export function useAudit() {
         formData.set("url", state.url.trim());
         sourceLabel = state.url.trim();
       }
+    } else if (state.mode === "company") {
+      if (!state.company.trim()) {
+        validationError = "Please enter a company name to search.";
+      } else {
+        formData.set("company", state.company.trim());
+        sourceLabel = state.company.trim();
+      }
     } else if (state.mode === "pdf") {
       if (!state.file) {
         validationError = "Please select a PDF file to upload.";
@@ -96,12 +109,13 @@ export function useAudit() {
 
     setState((prev) => ({ ...prev, loading: true, error: null, result: null, sourceLabel }));
     await submitAudit(formData, sourceLabel, setState);
-  }, [state.mode, state.url, state.file, state.text]);
+  }, [state.mode, state.url, state.company, state.file, state.text]);
 
   return {
     ...state,
     setMode,
     setUrl,
+    setCompany,
     setText,
     setFile,
     loadSampleCase,

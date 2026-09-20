@@ -4,6 +4,7 @@ import { InputTabs } from "@/components/dashboard/InputTabs";
 import { PdfDropzone } from "@/components/dashboard/PdfDropzone";
 import { TextPasteBox } from "@/components/dashboard/TextPasteBox";
 import { UrlInputForm } from "@/components/dashboard/UrlInputForm";
+import { CompanyInputForm } from "@/components/dashboard/CompanyInputForm";
 import { Header } from "@/components/layout/Header";
 import { ResultsView } from "@/components/results/ResultsView";
 import { Button } from "@/components/ui/Button";
@@ -16,6 +17,7 @@ export default function DashboardPage() {
   const {
     mode,
     url,
+    company,
     text,
     file,
     loading,
@@ -24,6 +26,7 @@ export default function DashboardPage() {
     sourceLabel,
     setMode,
     setUrl,
+    setCompany,
     setText,
     setFile,
     loadSampleCase,
@@ -56,6 +59,7 @@ export default function DashboardPage() {
               <InputTabs activeMode={mode} onChange={setMode} />
 
               {mode === "url" && <UrlInputForm url={url} onChange={setUrl} disabled={loading} />}
+              {mode === "company" && <CompanyInputForm company={company} onChange={setCompany} disabled={loading} />}
               {mode === "pdf" && <PdfDropzone file={file} onChange={setFile} disabled={loading} />}
               {mode === "text" && <TextPasteBox text={text} onChange={setText} disabled={loading} />}
 
