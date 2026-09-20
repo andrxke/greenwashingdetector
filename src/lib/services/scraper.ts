@@ -109,11 +109,26 @@ export async function scrapeUrl(rawUrl: string): Promise<ScrapeResult> {
 
   const deduped = Array.from(new Set(blocks));
 
-  const keywordHits = deduped.filter((block) =>
-    SUSTAINABILITY_KEYWORDS.some((keyword) => block.toLowerCase().includes(keyword))
-  );
+  const keywordIndexes = deduped
+    .map((block, index) => ({
+      index,
+      relevant: SUSTAINABILITY_KEYWORDS.some((keyword) => block.toLowerCase().includes(keyword))
+    }))
+    .filter((entry) => entry.relevant)
+    .map((entry) => entry.index);
 
-  const prioritized = keywordHits.length >= 3 ? keywordHits : deduped;
+  const keywordHits = keywordIndexes.length;
+  const contextIndexes = new Set<number>();
+  keywordIndexes.forEach((index) => {
+    for (let offset = -1; offset <= 1; offset += 1) {
+      if (index + offset >= 0 && index + offset < deduped.length) {
+        contextIndexes.add(index + offset);
+      }
+    }
+  });
+
+  const prioritized =
+    keywordHits >= 3 ? deduped.filter((_, index) => contextIndexes.has(index)) : deduped;
 
   const combinedText = prioritized.join("\n\n");
 

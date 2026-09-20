@@ -29,7 +29,12 @@ export function FlaggedClaimCard({ claim, index }: FlaggedClaimCardProps) {
         <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
           Flagged Claim #{index + 1}
         </span>
-        <Badge tone={SEVERITY_TONE[claim.severity]}>{severityToLabel(claim.severity)}</Badge>
+        <div className="flex flex-wrap justify-end gap-2">
+          <Badge tone={SEVERITY_TONE[claim.severity]}>{severityToLabel(claim.severity)}</Badge>
+          <Badge tone={claim.evidenceStatus === "supported" ? "low" : claim.evidenceStatus === "contradicted" ? "high" : "medium"}>
+            {claim.evidenceStatus.replace("_", " ")}
+          </Badge>
+        </div>
       </div>
 
       <div className="mb-4 flex gap-3 rounded-xl border border-white/10 bg-base-900/60 p-4">
@@ -40,7 +45,9 @@ export function FlaggedClaimCard({ claim, index }: FlaggedClaimCardProps) {
       <div className="mb-4 flex gap-3">
         <MessageSquareWarning className="mt-0.5 h-4 w-4 flex-shrink-0 text-risk-high" />
         <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Auditor Critique</p>
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Auditor Critique · {Math.round(claim.confidence * 100)}% screening confidence
+          </p>
           <p className="text-sm leading-relaxed text-slate-300">{claim.critiqueText}</p>
         </div>
       </div>

@@ -26,7 +26,7 @@ export function RemediatedCopyCard({ remediatedCopy }: RemediatedCopyCardProps) 
       <CardHeader>
         <div className="flex items-center gap-2.5">
           <Sparkles className="h-5 w-5 text-accent" />
-          <CardTitle>AI-Suggested Compliant Copy</CardTitle>
+          <CardTitle>Suggested Revision (Requires Review)</CardTitle>
         </div>
         <button
           type="button"

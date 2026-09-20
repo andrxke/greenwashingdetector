@@ -83,6 +83,15 @@ const CLAIM_PATTERNS: ClaimPattern[] = [
     weight: 8
   },
   {
+    regex: /\b(?:reduces?|cuts?|lowers?)\b[^.!?]{0,100}\bby\s+\d+(?:\.\d+)?%[^.!?]*(?:compared|than|versus|vs\.?)/gi,
+    severity: "high",
+    critique: (m) =>
+      `"${m}" makes a quantified comparative claim without identifying the measurement method, baseline, time period, scope, or comparison set. A percentage alone does not establish that the claimed environmental benefit is reliable.`,
+    regulationTip:
+      "Comparative environmental claims should identify the comparison basis, methodology, scope, and date, and retain evidence that can reproduce the result.",
+    weight: 12
+  },
+  {
     regex: /\bgreener?\s+(tomorrow|future|planet)\b/gi,
     severity: "low",
     critique: (m) =>
@@ -171,19 +180,46 @@ function findSentenceContaining(sentences: string[], matchText: string): string 
   const found = sentences.find((sentence) => sentence.toLowerCase().includes(lower));
   return found ? truncateText(found, 280) : truncateText(matchText, 280);
 }
+function isNegatedClaim(sentence: string, matchText: string): boolean {
+  const matchIndex = sentence.toLowerCase().indexOf(matchText.toLowerCase());
+  if (matchIndex < 0) return false;
+
+  const prefix = sentence.slice(Math.max(0, matchIndex - 90), matchIndex);
+  return /\b(?:not|no|never|without|don't|do not|doesn't|does not|isn't|is not|aren't|are not|cannot|can't|lack(?:s|ing)?|den(?:y|ies|ied))\b/i.test(
+    prefix
+  );
+}
+
+function hasAffirmativeMatch(text: string, pattern: RegExp): boolean {
+  const sentencePattern = new RegExp(pattern.source, pattern.flags.replace("g", ""));
+  return splitSentences(text).some((sentence) => {
+    const match = sentence.match(sentencePattern);
+    return Boolean(match?.[0] && !isNegatedClaim(sentence, match[0]));
+  });
+}
 
 function countSpecificityBonuses(text: string): number {
   let bonus = 0;
-  const numberMatches = text.match(/\b\d+(\.\d+)?\s*(%|tons?|tonnes?|kg|kwh|mwh|gwh)\b/gi);
-  if (numberMatches) bonus += Math.min(numberMatches.length * 2, 16);
+  const countAffirmativeMatches = (pattern: RegExp): number =>
+    splitSentences(text).reduce((total, sentence) => {
+      const matches = sentence.match(pattern) ?? [];
+      return total + matches.filter((match) => !isNegatedClaim(sentence, match)).length;
+    }, 0);
 
-  const certMatches = text.match(
-    /iso\s*14001|iso\s*14021|b\s*corp|leed\b|energy\s*star|fair\s*trade|sbti|science\s*based\s*targets|verified\s*carbon\s*standard|gold\s*standard/gi
+  bonus += Math.min(
+    countAffirmativeMatches(/\b\d+(\.\d+)?\s*(%|tons?|tonnes?|kg|kwh|mwh|gwh)\b/gi) * 2,
+    16
   );
-  if (certMatches) bonus += Math.min(certMatches.length * 5, 20);
-
-  const auditMatches = text.match(/third[- ]party\s+(audit|verif)|independently\s+(audit|verif)/gi);
-  if (auditMatches) bonus += Math.min(auditMatches.length * 5, 15);
+  bonus += Math.min(
+    countAffirmativeMatches(
+      /iso\s*14001|iso\s*14021|b\s*corp|leed\b|energy\s*star|fair\s*trade|sbti|science\s*based\s*targets|verified\s*carbon\s*standard|gold\s*standard/gi
+    ) * 5,
+    20
+  );
+  bonus += Math.min(
+    countAffirmativeMatches(/third[- ]party\s+(audit|verif)|independently\s+(audit|verif)/gi) * 5,
+    15
+  );
 
   return bonus;
 }
@@ -202,6 +238,7 @@ export function runHeuristicAudit(content: string): AuditResult {
 
     for (const match of uniqueMatches) {
       const originalText = findSentenceContaining(sentences, match);
+      if (isNegatedClaim(originalText, match)) continue;
       const dedupeKey = originalText.toLowerCase();
       if (seenSentences.has(dedupeKey)) continue;
       seenSentences.add(dedupeKey);
@@ -210,15 +247,23 @@ export function runHeuristicAudit(content: string): AuditResult {
         originalText,
         critiqueText: pattern.critique(match),
         severity: pattern.severity,
-        regulationTip: pattern.regulationTip
+        regulationTip: pattern.regulationTip,
+        evidenceStatus: "insufficient_evidence",
+        confidence: 0.8
       });
       rawWeightTotal += pattern.weight;
     }
   }
 
-  const missingMetrics = MISSING_METRIC_CHECKS.filter(
-    (check) => !check.pattern.test(content)
-  ).map((check) => check.metric);
+  const hasEnvironmentalSignal = hasAffirmativeMatch(
+    content,
+    /\b(?:sustainab\w*|carbon|emission\w*|eco[- ]friendly|environment\w*|climate|green|recycl\w*|renewable|biodegrad\w*|offset\w*|footprint|planet|esg)\b/i
+  );
+  const missingMetrics = !hasEnvironmentalSignal
+    ? ["No environmental claims found in the reviewed text; environmental substantiation was not assessed."]
+    : MISSING_METRIC_CHECKS.filter((check) => !hasAffirmativeMatch(content, check.pattern)).map(
+        (check) => check.metric
+      );
 
   if (missingMetrics.length === 0) {
     missingMetrics.push("No obvious data gaps detected by automated scan \u2014 manual review still recommended.");
@@ -245,24 +290,23 @@ export function runHeuristicAudit(content: string): AuditResult {
 }
 
 function buildRemediatedCopy(content: string, flagCount: number): string {
+  if (flagCount === 0) {
+    return `${content.trim()}\n\n[Screening note: No major environmental-claim pattern was detected. This is not confirmation that the text is compliant; retain current evidence and obtain jurisdiction-specific review before publication.]`;
+  }
   const rewritten = content
-    .replace(/\b100%\s*(sustainable|eco[- ]friendly|carbon\s*neutral|natural|green|renewable|biodegradable)\b/gi, "substantially $1 (see our published methodology for exact percentages)")
-    .replace(/\bnet[- ]zero\b/gi, "targeting net-zero by [target year], validated against SBTi criteria")
-    .replace(/\bcarbon[- ]neutral(ity)?\b/gi, "carbon neutral for Scope 1 and 2 emissions (verified against [named registry]; Scope 3 baseline in progress)")
-    .replace(/\bzero[- ]waste\b/gi, "actively reducing waste toward a measured landfill diversion target")
-    .replace(/(?<!net[- ])\bzero\s*(impact|emissions?)\b/gi, "working to minimize $1, with figures published annually")
-    .replace(/\b(eco|earth|planet|nature)[- ]friendly\b/gi, "designed to reduce environmental impact in [specific measurable way]")
-    .replace(/\ball[- ]natural\b/gi, "made primarily from plant-derived ingredients (full ingredient list available)")
-    .replace(/\b(completely|totally|fully)\s+(sustainable|biodegradable|renewable|green|recyclable)\b/gi, "largely $2, with independent verification of [X]% by [certifier]")
-    .replace(/\bmost\s+(environmentally\s+friendly|sustainable|eco[- ]friendly|green)\b/gi, "among the more $1 options in our tested product line, based on [benchmark]")
-    .replace(/\bno\s+(negative\s+)?(impact|footprint|effect)\s+on\s+(the\s+)?(planet|environment|climate)\b/gi, "measurably reduced $2 on $4 compared to our [baseline year] baseline");
+    .replace(/\b100%\s*(sustainable|eco[- ]friendly|carbon\s*neutral|natural|green|renewable|biodegradable)\b/gi, "a measured percentage of $1 [publish percentage, scope, method, and date]")
+    .replace(/\bnet[- ]zero\b/gi, "a proposed net-zero target [publish target year, baseline, milestones, and method]")
+    .replace(/\bcarbon[- ]neutral(ity)?\b/gi, "a carbon-neutral claim [publish scopes, baseline, method, and verifier before using this claim]")
+    .replace(/\bzero[- ]waste\b/gi, "a measured waste-diversion claim [publish boundary, rate, method, and date]")
+    .replace(/(?<!net[- ])\bzero\s*(impact|emissions?)\b/gi, "a measured reduction in $1 [publish scope, baseline, method, and date]")
+    .replace(/\b(eco|earth|planet|nature)[- ]friendly\b/gi, "a specific environmental benefit [publish the metric, scope, method, and date]")
+    .replace(/\ball[- ]natural\b/gi, "specific ingredients and environmental attributes [publish the full ingredient list and substantiation]")
+    .replace(/\b(completely|totally|fully)\s+(sustainable|biodegradable|renewable|green|recyclable)\b/gi, "a measured $2 attribute [publish percentage, scope, method, and date]")
+    .replace(/\bmost\s+(environmentally\s+friendly|sustainable|eco[- ]friendly|green)\b/gi, "a comparative environmental claim [publish the benchmark, comparison set, scope, method, and date]")
+    .replace(/\bno\s+(negative\s+)?(impact|footprint|effect)\s+on\s+(the\s+)?(planet|environment|climate)\b/gi, "a measured environmental reduction claim [publish scope, baseline, method, and date]");
 
   const disclaimer =
-    "\n\n[Auditor's Note: This remediated copy replaces unverifiable absolute claims with specific, measurable, and independently verifiable language. Bracketed placeholders indicate where the company must supply real data, named certifiers, and baseline years before publishing.]";
-
-  if (flagCount === 0) {
-    return `${rewritten.trim()}\n\n[Auditor's Note: No major greenwashing red flags were detected in the automated scan. Continue to ensure all environmental claims remain backed by current, verifiable data.]`;
-  }
+    "\n\n[Screening note: This is a draft revision, not approved compliance copy. Replace every bracketed item with evidence from the source or remove the claim. Obtain jurisdiction-specific legal and technical review before publication.]";
 
   return `${rewritten.trim()}${disclaimer}`;
 }

@@ -64,6 +64,11 @@ export function ExportButton({ result, sourceLabel }: ExportButtonProps) {
         ensureSpace(10);
         writeParagraph(`${index + 1}. "${claim.originalText}"`, 10.5, 5.5, true);
         writeParagraph(`Severity: ${severityToLabel(claim.severity)}`, 9.5, 5);
+        writeParagraph(
+          `Evidence status: ${claim.evidenceStatus.replace("_", " ")} (${Math.round(claim.confidence * 100)}% screening confidence)`,
+          9.5,
+          5
+        );
         writeParagraph(`Critique: ${claim.critiqueText}`, 9.5, 5);
         writeParagraph(`Regulation Tip: ${claim.regulationTip}`, 9.5, 5);
         cursorY += 3;

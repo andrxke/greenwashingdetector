@@ -1,6 +1,7 @@
 export type RiskLevel = "Low" | "Moderate" | "High" | "Critical";
 
 export type ClaimSeverity = "low" | "medium" | "high";
+export type EvidenceStatus = "supported" | "contradicted" | "insufficient_evidence";
 
 export type InputMode = "url" | "pdf" | "text";
 
@@ -9,6 +10,8 @@ export interface FlaggedClaim {
   critiqueText: string;
   severity: ClaimSeverity;
   regulationTip: string;
+  evidenceStatus: EvidenceStatus;
+  confidence: number;
 }
 
 export interface AuditResult {
